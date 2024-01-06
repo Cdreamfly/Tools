@@ -29,7 +29,7 @@ namespace cm {
 			return old_option;
 		}
 
-		[[nodiscard]] bool insert(int fd, uint32_t events, bool ones_hot) const {
+		bool insert(int fd, uint32_t events, bool ones_hot) const {
 			if (fd < 0)return false;
 			epoll_event event{};
 			event.data.fd = fd;
@@ -43,7 +43,7 @@ namespace cm {
 			return res == 0;
 		}
 
-		[[nodiscard]] bool update(int fd, uint32_t events) const {
+		bool update(int fd, uint32_t events) const {
 			if (fd < 0)return false;
 			epoll_event event{};
 			event.data.fd = fd;
@@ -51,7 +51,7 @@ namespace cm {
 			return 0 == epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, fd, &event);
 		}
 
-		[[nodiscard]] bool remove(int fd) const {
+		bool remove(int fd) const {
 			if (fd < 0)return false;
 			epoll_event event = {0};
 			return 0 == epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, fd, &event);
@@ -61,12 +61,12 @@ namespace cm {
 			return epoll_wait(epoll_fd_, &events_[0], static_cast<int>(events_.size()), timeout);
 		}
 
-		[[nodiscard]] int get_event_fd(int i) const {
+		int get_event_fd(int i) const {
 			assert(i >= 0 && i < events_.size());
 			return events_[i].data.fd;
 		}
 
-		[[nodiscard]] uint32_t get_event(int i) const {
+		uint32_t get_event(int i) const {
 			assert(i >= 0 && i < events_.size());
 			return events_[i].events;
 		}

@@ -22,7 +22,7 @@ public:
 		inet_pton(AF_INET, ip.c_str(), &m_addr.sin_addr);
 	}
 
-	[[nodiscard]] const sockaddr *getSockAddr() const {
+	const sockaddr *getSockAddr() const {
 		return (const sockaddr *) &m_addr;
 	}
 
@@ -30,24 +30,24 @@ public:
 		m_addr = addr;
 	}
 
-	[[nodiscard]] sa_family_t family() const {
+	sa_family_t family() const {
 		return m_addr.sin_family;
 	}
 
-	[[nodiscard]] std::string getIP() const {
+	std::string getIP() const {
 		char buf[64];
 		inet_ntop(AF_INET, &m_addr.sin_addr, buf, static_cast<socklen_t>(sizeof(m_addr)));
 		return buf;
 	}
 
-	[[nodiscard]] std::string toIpPort() const {
+	std::string toIpPort() const {
 		char buf[64] = {0};
 		inet_ntop(AF_INET, &m_addr.sin_addr, buf, static_cast<socklen_t>(sizeof(m_addr)));
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), ":%u", this->getPort());
 		return buf;
 	}
 
-	[[nodiscard]] uint16_t getPort() const {
+	uint16_t getPort() const {
 		return be16toh(m_addr.sin_port);
 	}
 
