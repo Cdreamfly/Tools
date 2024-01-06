@@ -15,7 +15,7 @@ namespace cm {
 			socketOps::close(_fd);
 		}
 
-		[[nodiscard]] int getFd() const {
+		int getFd() const {
 			return _fd;
 		}
 
