@@ -38,7 +38,7 @@ namespace cm {
 
 		~Timestamp() = default;
 
-		explicit Timestamp(int64_t microSecondsSinceEpoch) : _microSecondsSinceEpoch(microSecondsSinceEpoch) {}
+		explicit Timestamp(const int64_t microSecondsSinceEpoch) : _microSecondsSinceEpoch(microSecondsSinceEpoch) {}
 
 		static Timestamp now() {
 			return Timestamp(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
@@ -104,7 +104,7 @@ namespace cm {
 	 * @param path
 	 * @return
 	 */
-	long int get_file_size(const std::string &path) {
+	inline long int get_file_size(const std::string &path) {
 		if (open(path.c_str(), O_RDONLY) < 0) {
 			std::cerr << "file open fail!" << std::endl;
 			return -1;
@@ -119,7 +119,7 @@ namespace cm {
 	 * @param path
 	 * @return
 	 */
-	size_t get_disk_available_space(const std::string &path) {
+	inline size_t get_disk_available_space(const std::string &path) {
 		if (access(path.c_str(), F_OK) != 0) {
 			std::cerr << " file path open fail!" << std::endl;
 			return -1;
@@ -134,10 +134,10 @@ namespace cm {
 	 * @param path
 	 * @param files
 	 */
-	bool get_dir_file_names(const std::string &path, std::vector<std::string> &files) {
-		DIR *pDir = nullptr;
+	inline bool get_dir_file_names(const std::string &path, std::vector<std::string> &files) {
+		DIR *pDir = opendir(path.c_str());
+		if (!pDir) return false;
 		dirent *ptr = nullptr;
-		if (!(pDir = opendir(path.c_str()))) return false;
 		while ((ptr = readdir(pDir)) != nullptr) {
 			if (strcmp(ptr->d_name, ".") != 0 && strcmp(ptr->d_name, "..") != 0) {
 				files.emplace_back(ptr->d_name);
@@ -153,7 +153,7 @@ namespace cm {
 	 * @param name
 	 * @return
 	 */
-	bool find_dir_file_exists(const std::string &path, const std::string &name) {
+	inline bool find_dir_file_exists(const std::string &path, const std::string &name) {
 		std::vector<std::string> files_name;
 		get_dir_file_names(path, files_name);
 		return std::any_of(files_name.begin(), files_name.end(), [&](const std::string &it) { return name == it; });
@@ -165,7 +165,7 @@ namespace cm {
 	 * @param path
 	 * @return
 	 */
-	ssize_t write_file_all(const int fd, const std::string &path) {
+	inline ssize_t write_file_all(const int fd, const std::string &path) {
 		std::fstream fs(path.c_str(), std::fstream::in | std::fstream::binary);
 		char buf[BUFSIZ] = {0};
 		ssize_t size = 0;
@@ -183,7 +183,7 @@ namespace cm {
 	 * @param path
 	 * @return
 	 */
-	ssize_t read_file_all(const int fd, const std::string &path) {
+	inline ssize_t read_file_all(const int fd, const std::string &path) {
 		std::fstream fs(path.c_str(), std::fstream::out | std::fstream::binary);
 		char buf[BUFSIZ] = {0};
 		ssize_t size = 0;
@@ -203,7 +203,7 @@ namespace cm {
 	 * @param path
 	 * @return
 	 */
-	unsigned long long get_available_Disk(const std::string &path) {
+	inline unsigned long long get_available_Disk(const std::string &path) {
 		struct statfs diskInfo{};
 		statfs(path.c_str(), &diskInfo);
 		return (diskInfo.f_bavail * diskInfo.f_bsize) >> 30;
@@ -215,7 +215,7 @@ namespace cm {
 	 * @param del_ims
 	 * @return
 	 */
-	std::vector<std::string_view> string_view_split(std::string_view str_v, std::string_view del_ims = " ") {
+	inline std::vector<std::string_view> string_view_split(std::string_view str_v, std::string_view del_ims = " ") {
 		std::vector<std::string_view> output;
 		size_t first = 0;
 		while (first < str_v.size()) {
@@ -237,7 +237,7 @@ namespace cm {
 		* @param del_ims
 		* @return
 	*/
-	std::vector<std::string> string_split(const std::string &str_v, const std::string &del_ims = " ") {
+	inline std::vector<std::string> string_split(const std::string &str_v, const std::string &del_ims = " ") {
 		std::vector<std::string> output;
 		size_t first = 0;
 		while (first < str_v.size()) {
@@ -258,7 +258,7 @@ namespace cm {
 	 * @param cmd
 	 * @return
 	 */
-	std::string get_addr_by_cmd(const std::string &cmd) {
+	inline std::string get_addr_by_cmd(const std::string &cmd) {
 		FILE *fp = nullptr;
 		char buf[BUFSIZ] = {0};
 		std::string res;
@@ -277,7 +277,7 @@ namespace cm {
 	 * @param str
 	 * @return
 	 */
-	bool is_all_number_string(const std::string &str) {
+	inline bool is_all_number_string(const std::string &str) {
 		return std::all_of(str.begin(), str.end(), [&](const char c) {
 			if (std::isdigit(c) == 0) {
 				return false;
@@ -292,7 +292,7 @@ namespace cm {
 	 * @param radix
 	 * @return
 	 */
-	std::string ito_str(int n, const int radix) {
+	inline std::string ito_str(int n, const int radix) {
 		std::string ans;
 		do {
 			int t = n % radix;
@@ -310,7 +310,7 @@ namespace cm {
 	 * @param radix
 	 * @return
 	 */
-	int str_toi(const std::string &s, const int radix) {
+	inline int str_toi(const std::string &s, const int radix) {
 		int ans = 0;
 		for (char t: s) {
 			if (t >= '0' && t <= '9') ans = ans * radix + t - '0';
@@ -324,7 +324,7 @@ namespace cm {
 	 * @param str
 	 * @return
 	 */
-	std::string hex_to_string(const std::string &str) {
+	inline std::string hex_to_string(const std::string &str) {
 		std::string result;
 		//十六进制两个字符为原始字符一个字符
 		for (size_t i = 0; i < str.length(); i += 2) {
@@ -337,7 +337,7 @@ namespace cm {
 		return result;
 	}
 
-	std::string string_to_hex(const std::string &str) {
+	inline std::string string_to_hex(const std::string &str) {
 		const char *const lut = "0123456789ABCDEF";
 		size_t len = str.length();
 		std::string hex;
