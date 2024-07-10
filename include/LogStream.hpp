@@ -23,7 +23,7 @@ namespace cm {
 
 			void reset() const { cur_ = data_; }
 
-			void clear() const { memset(data_, 0, SIZE); }
+			void bzero() const { memset(data_, 0, SIZE); }
 
 			void add(const std::size_t len) { cur_ += len; }
 
@@ -37,6 +37,8 @@ namespace cm {
 			}
 
 			[[nodiscard]] std::string toString() const { return std::string(data_, length()); }
+
+			[[nodiscard]] std::string_view toStringView() const { return std::string_view(data_, length());}
 
 		private:
 			[[nodiscard]] const char *end() const { return data_ + sizeof(data_); }
@@ -79,8 +81,17 @@ namespace cm {
 
 		self &operator<<(const char *);
 
-		void append(const char*data,const std::size_t len) {buffer_.append(data,len);}
-		[[nodiscard]] const Buffer& buffer()const{return buffer_;}
+		self &operator<<(const std::string& );
+
+		self &operator<<(const std::string_view&);
+
+		self &operator<<(const Buffer&);
+
+		void append(const char*data, const std::size_t len) { buffer_.append(data,len); }
+
+		[[nodiscard]] const Buffer& buffer() const { return buffer_; }
+
+		void resetBuffer() const { buffer_.reset(); }
 
 	private:
 		template<typename T>
