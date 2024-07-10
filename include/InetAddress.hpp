@@ -1,56 +1,36 @@
 #pragma once
 
-#include "Utils.hpp"
+#include "Copyable.hpp"
 
-class InetAddress : public cm::copyable {
-public:
-	explicit InetAddress() = default;
+#include <arpa/inet.h>
+#include <string>
 
-	explicit InetAddress(const sockaddr_in &addr) : m_addr(addr) {}
+namespace cm::net {
+	class InetAddress : public Copyable {
+	public:
+		explicit InetAddress(uint16_t port = 0, const std::string &ip = "127.0.0.1");
 
-	explicit InetAddress(const uint16_t port, const std::string &ip = "127.0.0.1") {
-		memset(&m_addr, 0, sizeof(m_addr));
-		m_addr.sin_family = AF_INET;
-		m_addr.sin_addr.s_addr = inet_addr(ip.c_str());
-		m_addr.sin_port = htons(port);
-	}
+		explicit InetAddress(const sockaddr_in &addr) : addr_(addr) {
+		}
 
-	InetAddress(const std::string &ip, const uint16_t port) {
-		memset(&m_addr, 0, sizeof(m_addr));
-		m_addr.sin_family = AF_INET;
-		m_addr.sin_port = htons(port);
-		inet_pton(AF_INET, ip.c_str(), &m_addr.sin_addr);
-	}
+		[[nodiscard]] std::string toIp() const;
 
-	[[nodiscard]] const sockaddr *getSockAddr() const {
-		return (const sockaddr *) &m_addr;
-	}
+		[[nodiscard]] std::string toIpPort() const;
 
-	void setSockAddr(const sockaddr_in &addr) {
-		m_addr = addr;
-	}
+		[[nodiscard]] uint16_t toPort() const;
 
-	[[nodiscard]] sa_family_t family() const {
-		return m_addr.sin_family;
-	}
+		[[nodiscard]] const sockaddr_in *getSockAddr() const { return &addr_; }
 
-	[[nodiscard]] std::string getIP() const {
-		char buf[64];
-		inet_ntop(AF_INET, &m_addr.sin_addr, buf, static_cast<socklen_t>(sizeof(m_addr)));
-		return buf;
-	}
+		void setSockAddr(const sockaddr_in &addr) { addr_ = addr; }
 
-	[[nodiscard]] std::string toIpPort() const {
-		char buf[64] = {0};
-		inet_ntop(AF_INET, &m_addr.sin_addr, buf, static_cast<socklen_t>(sizeof(m_addr)));
-		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), ":%u", this->getPort());
-		return buf;
-	}
+		[[nodiscard]] sa_family_t family() const { return addr_.sin_family; }
 
-	[[nodiscard]] uint16_t getPort() const {
-		return be16toh(m_addr.sin_port);
-	}
+		[[nodiscard]] const sockaddr *getSocketAddr() const { return (const sockaddr *) &addr_; }
 
-private:
-	sockaddr_in m_addr{};
-};
+		void setSocketAddr(const sockaddr_in &addr) { addr_ = addr; }
+
+	private:
+		sockaddr_in addr_{};
+	};
+}
+

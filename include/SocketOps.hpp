@@ -2,58 +2,44 @@
 
 #include <arpa/inet.h>
 
-namespace cm::socketOps {
-	inline int createNonblockingSocket(const sa_family_t family) {
-		const int fd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
-		if (fd < 0) {
-			fprintf(stderr, "Sockets::CreateNonblockingSocket\n");
-		}
-		return fd;
-	}
+namespace cm::net::sockets {
+	int createNonblockingOrDie(sa_family_t);
 
-	inline void bind(const int fd, const sockaddr *addr) {
-		if (::bind(fd, addr, sizeof(sockaddr_in)) < 0) {
-			fprintf(stderr, "Sockets::Bind\n");
-		}
-	}
+	int connect(int, const sockaddr *);
 
-	inline void listen(const int fd) {
-		if (::listen(fd, SOMAXCONN) < 0) {
-			fprintf(stderr, "Sockets::Listen\n");
-		}
-	}
+	void fromIpPort(const char *ip, uint16_t, sockaddr_in *);
 
-	inline int accept(const int fd, sockaddr_in *addr) {
-		auto len = static_cast<socklen_t>(sizeof(*addr));
-		const int connFd = ::accept4(fd, (sockaddr *) addr, &len, SOCK_NONBLOCK | SOCK_CLOEXEC);
-		if (connFd < 0) {
-			fprintf(stderr, "Sockets::Accept\n");
-		}
-		return connFd;
-	}
+	void close(int);
 
-	inline void setSockOps(const int fd) {
-		constexpr int opt = 1;
-		setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const void *) &opt, sizeof(opt));
-	}
+	void bindOrDie(int, const sockaddr *);
 
-	inline void close(const int fd) {
-		if (::close(fd) < 0) {
-			fprintf(stderr, "Sockets::Close\n");
-		}
-	}
+	void listenOrDie(int);
 
-	inline void shutdownWrite(const int fd) {
-		if (::shutdown(fd, SHUT_WR) < 0) {
-			fprintf(stderr, "sockets::shutdownWrite\n");
-		}
-	}
+	int accept(int, sockaddr_in *);
 
-	inline ssize_t read(const int fd, void *buf, const size_t count) {
-		return ::read(fd, buf, count);
-	}
+	void shutdownWrite(int);
 
-	inline ssize_t write(const int fd, const void *buf, const size_t count) {
-		return ::write(fd, buf, count);
-	}
+	ssize_t read(int, void *, size_t);
+
+	ssize_t readv(int, const iovec *, int);
+
+	ssize_t write(int, const void *, size_t);
+
+	void setTcpNoDelay(int, bool);
+
+	void setReuseAddr(int, bool);
+
+	void setReusePort(int, bool);
+
+	void setKeepAlive(int, bool);
+
+	sockaddr_in getLocalAddr(int);
+
+	sockaddr_in getPeerAddr(int);
+
+	int getSocketError(int);
+
+	bool isSelfConnect(int);
 }
+
+

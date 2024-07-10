@@ -1,77 +1,38 @@
 #pragma once
 
-#include "SocketOps.hpp"
-#include "InetAddress.hpp"
-#include <netinet/tcp.h>
+#include "NonCopyable.hpp"
 
-namespace cm {
-    class Socket : private cm::noncopyable {
-    public:
-        explicit Socket(const int fd) : _fd(fd) {}
 
-        Socket() : _fd(0) {}
+namespace cm::net {
+	class InetAddress;
 
-        ~Socket() noexcept {
-            socketOps::close(_fd);
-        }
+	class Socket : NonCopyable {
+	public:
+		explicit Socket(const int fd) : sockFd_(fd) {
+		}
 
-        [[nodiscard]] int getFd() const {
-            return _fd;
-        }
+		~Socket();
 
-        void bind(const InetAddress &addr) const {
-            socketOps::bind(_fd, addr.getSockAddr());
-        }
+		[[nodiscard]] int fd() const { return sockFd_; }
 
-        void listen() const {
-            socketOps::listen(_fd);
-        }
+		void bindAddress(const InetAddress &) const;
 
-        void SetSocketOps() const {
-            socketOps::setSockOps(_fd);
-        }
+		void listen() const;
 
-        void shutdownWrite() const {
-            socketOps::shutdownWrite(_fd);
-        }
+		int accept(InetAddress &) const;
 
-        int accept(InetAddress &peerAddr) const {
-            sockaddr_in addr{};
-            memset(&addr, 0, sizeof(addr));
-            const int fd = socketOps::accept(_fd, &addr);
-            if (fd >= 0) {
-                peerAddr.setSockAddr(addr);
-            }
-            return fd;
-        }
+		void shutdownWrite() const;
 
-        void setTcpNoDelay(const bool on) const {
-            const int opt_val = on ? 1 : 0;
-            setsockopt(_fd, IPPROTO_TCP, TCP_NODELAY, &opt_val, static_cast<socklen_t>(sizeof(opt_val)));
-        }
+		void setTcpNoDelay(bool) const;
 
-        void setReuseAddr(const bool on) const {
-            const int opt_val = on ? 1 : 0;
-            setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt_val, static_cast<socklen_t>(sizeof(opt_val)));
-        }
+		void setReuseAddr(bool) const;
 
-        void setReusePort(const bool on) const {
-            const int opt_val = on ? 1 : 0;
-            if (setsockopt(_fd, SOL_SOCKET, SO_REUSEPORT, &opt_val, static_cast<socklen_t>(sizeof(opt_val))) < 0 && on) {
-                fprintf(stderr, "setReusePort error!\n");
-            }
-        }
+		void setReusePort(bool) const;
 
-        void setKeepAlive(const bool on) const {
-            const int opt_val = on ? 1 : 0;
-            setsockopt(_fd, SOL_SOCKET, SO_KEEPALIVE, &opt_val, static_cast<socklen_t>(sizeof(opt_val)));
-        }
+		void setKeepAlive(bool) const;
 
-        void setNonblocking() const {
-            fcntl(_fd, F_SETFL, fcntl(_fd, F_GETFL) | O_NONBLOCK);
-        }
-
-    private:
-        int _fd;
-    };
+	private:
+		const int sockFd_;
+	};
 }
+

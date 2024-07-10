@@ -6,11 +6,13 @@
 #include <unistd.h>
 #include <cassert>
 
+#include "NonCopyable.hpp"
+
 namespace cm {
     constexpr size_t kMAX_EVENT_NUM = 1024;
     constexpr size_t kBUFFER_SIZE = 1024;
 
-    class Epoll {
+    class Epoll : NonCopyable{
     public:
         Epoll() : epoll_fd_(epoll_create(EPOLL_CLOEXEC)), events_(kMAX_EVENT_NUM) {
             assert(epoll_fd_ >= 0 && !events_.empty());

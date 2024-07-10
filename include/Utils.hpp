@@ -8,58 +8,32 @@
 #include <fstream>
 #include <regex>
 #include <chrono>
+#include <iostream>
 #include <thread>
 
 namespace cm {
-	class copyable {
-	protected:
-		copyable() = default;
+	constexpr char lut[] = "0123456789ABCDEF";
+	constexpr char digits[] = "9876543210123456789";
+	inline const char *zero = digits + 9;
 
-		~copyable() = default;
-	};
+	template<typename T>
+	size_t convert(char buf[], T value) {
+		T i = value;
+		char *p = buf;
+		do {
+			const int lsd = static_cast<int>(i % 10);
+			i /= 10;
+			*p++ = zero[lsd];
+		} while (i != 0);
 
-	class noncopyable {
-	public:
-		noncopyable(const noncopyable &) = delete;
-
-		const noncopyable &operator=(const noncopyable &) = delete;
-
-	protected:
-		noncopyable() = default;
-
-		~noncopyable() = default;
-	};
-
-	class Timestamp : public copyable {
-	public:
-		using ptr = std::shared_ptr<Timestamp>;
-
-		explicit Timestamp() : _microSecondsSinceEpoch(0) {}
-
-		~Timestamp() = default;
-
-		explicit Timestamp(const int64_t microSecondsSinceEpoch) : _microSecondsSinceEpoch(microSecondsSinceEpoch) {}
-
-		static Timestamp now() {
-			return Timestamp(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+		if (value < 0) {
+			*p++ = '-';
 		}
+		*p = '\0';
+		std::reverse(buf, p);
 
-		[[nodiscard]] std::string toString() const {
-			tm *ptm = localtime(&_microSecondsSinceEpoch);
-			char date[128] = {0};
-			sprintf(date, "%4d-%02d-%02d %02d:%02d:%02d",
-			        static_cast<int>(ptm->tm_year + 1900),
-			        static_cast<int>(ptm->tm_mon + 1),
-			        static_cast<int>(ptm->tm_mday),
-			        static_cast<int>(ptm->tm_hour),
-			        static_cast<int>(ptm->tm_min),
-			        static_cast<int>(ptm->tm_sec));
-			return date;
-		}
-
-	private:
-		int64_t _microSecondsSinceEpoch;
-	};
+		return p - buf;
+	}
 
 	/**
 	 * 获取比特位是0或1
@@ -259,10 +233,9 @@ namespace cm {
 	 * @return
 	 */
 	inline std::string get_addr_by_cmd(const std::string &cmd) {
-		FILE *fp = nullptr;
 		char buf[BUFSIZ] = {0};
 		std::string res;
-		if ((fp = popen(cmd.c_str(), "r")) != nullptr) {
+		if (FILE *fp = nullptr; (fp = popen(cmd.c_str(), "r")) != nullptr) {
 			while (fgets(buf, sizeof(buf), fp) != nullptr) {
 				res += buf;
 			}
@@ -312,7 +285,7 @@ namespace cm {
 	 */
 	inline int str_toi(const std::string &s, const int radix) {
 		int ans = 0;
-		for (char t: s) {
+		for (const char t: s) {
 			if (t >= '0' && t <= '9') ans = ans * radix + t - '0';
 			else ans = ans * radix + t - 'a' + 10;
 		}
@@ -332,14 +305,13 @@ namespace cm {
 			std::string byte = str.substr(i, 2);
 			//将十六进制的string转成long再强转成int再转成char
 			result.push_back(
-					static_cast<char>(static_cast<int>(std::strtol(byte.c_str(), nullptr, 16))));//将处理完的字符压入result中
+				static_cast<char>(static_cast<int>(std::strtol(byte.c_str(), nullptr, 16)))); //将处理完的字符压入result中
 		}
 		return result;
 	}
 
 	inline std::string string_to_hex(const std::string &str) {
-		const char *const lut = "0123456789ABCDEF";
-		size_t len = str.length();
+		const size_t len = str.length();
 		std::string hex;
 		hex.reserve(len * 2);
 		for (size_t i = 0; i < len; ++i) {
@@ -380,5 +352,37 @@ namespace cm {
 				}
 			}
 		}).detach();
+	}
+
+	/**
+	* Name:    CRC-16/MODBUS       x16+x15+x2+1
+	* Poly:    0x8005
+	* Init:    0xFFFF
+	* Refine:   TrueA
+	* Ref out:  True
+	* Xor out:  0x0000
+	* Note:
+	*/
+	inline unsigned short int crc16_modbus(const unsigned char *data, unsigned short int length) {
+		unsigned short int crc = 0xffff;
+		while (length--) {
+			crc ^= *data++;
+			for (unsigned char i = 0; i < 8; ++i) {
+				if (crc & 1) {
+					crc = (crc >> 1) ^ 0xA001;
+				} else {
+					crc = (crc >> 1);
+				}
+			}
+		}
+		return crc;
+	}
+
+	inline std::string ustr_to_hex(const unsigned char ch[], const int len) {
+		std::stringstream ss;
+		for (int i = 0; i < len; ++i) {
+			ss << lut[ch[i] >> 4] << lut[ch[i] & 0xf];
+		}
+		return ss.str();
 	}
 }

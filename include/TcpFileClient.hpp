@@ -1,17 +1,19 @@
 #pragma once
 
+#include <iostream>
+
 #include "Utils.hpp"
-#include "SocketOps.hpp"
 #include "InetAddress.hpp"
+#include "SocketOps.hpp"
 
 namespace cm {
 	class TcpFileClient {
 	public:
-		explicit TcpFileClient(const std::string &ip, const uint16_t port) : addr(ip, port) {
-			fd = socketOps::createNonblockingSocket(addr.family());
+		explicit TcpFileClient(const std::string &ip, const uint16_t port) : addr(port, ip) {
+			fd = cm::net::sockets::createNonblockingOrDie(addr.family());
 		}
 
-		explicit TcpFileClient(const InetAddress &addr) : fd(socketOps::createNonblockingSocket(addr.family())) {}
+		explicit TcpFileClient(const net::InetAddress &addr) : fd(net::sockets::createNonblockingOrDie(addr.family())) {}
 
 		bool connect() {
 			if (::connect(fd, (sockaddr *) &addr, sizeof(sockaddr_in)) < 0) {
@@ -31,6 +33,6 @@ namespace cm {
 
 	private:
 		int fd{};
-		InetAddress addr;
+		net::InetAddress addr;
 	};
 }
