@@ -21,7 +21,7 @@ namespace cm {
 
 			[[nodiscard]] int length() const { return cur_ - data_; }
 
-			void reset() const { cur_ = data_; }
+			void reset() { cur_ = data_; }
 
 			void bzero() const { memset(data_, 0, SIZE); }
 
@@ -38,7 +38,7 @@ namespace cm {
 
 			[[nodiscard]] std::string toString() const { return std::string(data_, length()); }
 
-			[[nodiscard]] std::string_view toStringView() const { return std::string_view(data_, length());}
+			[[nodiscard]] std::string_view toStringView() const { return std::string_view(data_, length()); }
 
 		private:
 			[[nodiscard]] const char *end() const { return data_ + sizeof(data_); }
@@ -81,17 +81,17 @@ namespace cm {
 
 		self &operator<<(const char *);
 
-		self &operator<<(const std::string& );
+		self &operator<<(const std::string &);
 
-		self &operator<<(const std::string_view&);
+		self &operator<<(const std::string_view &);
 
-		self &operator<<(const Buffer&);
+		self &operator<<(const Buffer &);
 
-		void append(const char*data, const std::size_t len) { buffer_.append(data,len); }
+		void append(const char *data, const std::size_t len) { buffer_.append(data, len); }
 
-		[[nodiscard]] const Buffer& buffer() const { return buffer_; }
+		[[nodiscard]] const Buffer &buffer() const { return buffer_; }
 
-		void resetBuffer() const { buffer_.reset(); }
+		void resetBuffer() { buffer_.reset(); }
 
 	private:
 		template<typename T>
@@ -101,4 +101,23 @@ namespace cm {
 		Buffer buffer_;
 		static constexpr int kMaxNumericSize = 48;
 	};
+
+	class Fmt {
+	public:
+		template<typename T>
+		Fmt(const char *, T);
+
+		[[nodiscard]] const char *data() const { return buf_; }
+
+		[[nodiscard]] int length() const { return length_; }
+
+	private:
+		char buf_[32]{};
+		int length_;
+	};
+
+	inline LogStream &operator<<(LogStream &s, const Fmt &fmt) {
+		s.append(fmt.data(), fmt.length());
+		return s;
+	}
 }

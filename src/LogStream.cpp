@@ -1,6 +1,8 @@
 #include "LogStream.hpp"
 #include "Utils.hpp"
 
+#include <cassert>
+
 template<typename T>
 void cm::LogStream::formatInteger(T v) {
 	if (buffer_.avail() > kMaxNumericSize) {
@@ -19,7 +21,7 @@ cm::LogStream::self &cm::LogStream::operator<<(const char v) {
 }
 
 cm::LogStream::self &cm::LogStream::operator<<(const float v) {
-	*this <<static_cast<double>(v);
+	*this << static_cast<double>(v);
 	return *this;
 }
 
@@ -43,8 +45,7 @@ cm::LogStream::self &cm::LogStream::operator<<(const unsigned int v) {
 	return *this;
 }
 
-cm::LogStream::self &cm::LogStream::operator<<(const unsigned long v)
-{
+cm::LogStream::self &cm::LogStream::operator<<(const unsigned long v) {
 	formatInteger(v);
 	return *this;
 }
@@ -54,28 +55,26 @@ cm::LogStream::self &cm::LogStream::operator<<(const long v) {
 	return *this;
 }
 
-cm::LogStream::self &cm::LogStream::operator<<(const long long v)
-{
+cm::LogStream::self &cm::LogStream::operator<<(const long long v) {
 	formatInteger(v);
 	return *this;
 }
 
-cm::LogStream::self &cm::LogStream::operator<<(const unsigned long long v)
-{
+cm::LogStream::self &cm::LogStream::operator<<(const unsigned long long v) {
 	formatInteger(v);
 	return *this;
 }
 
 cm::LogStream::self &cm::LogStream::operator<<(const double v) {
-	if (buffer_.avail() >=kMaxNumericSize) {
+	if (buffer_.avail() >= kMaxNumericSize) {
 		buffer_.add(snprintf(buffer_.current(), kMaxNumericSize, "%.12g", v));
 	}
 	return *this;
 }
 
 cm::LogStream::self &cm::LogStream::operator<<(const char *str) {
-	if(str) {
-		buffer_.append(str,strlen(str));
+	if (str) {
+		buffer_.append(str, strlen(str));
 	} else {
 		buffer_.append("(NULL)", 6);
 	}
@@ -84,7 +83,7 @@ cm::LogStream::self &cm::LogStream::operator<<(const char *str) {
 
 cm::LogStream::self &cm::LogStream::operator<<(const void *p) {
 	if (buffer_.avail() >= kMaxNumericSize) {
-		char* buf = buffer_.current();
+		char *buf = buffer_.current();
 		buf[0] = '0';
 		buf[1] = 'x';
 		buffer_.add(convertHex(buf + 2, reinterpret_cast<uintptr_t>(p)) + 2);
@@ -98,7 +97,7 @@ cm::LogStream::self &cm::LogStream::operator<<(const std::string &str) {
 }
 
 cm::LogStream::self &cm::LogStream::operator<<(const std::string_view &str) {
-	buffer_.append(str.data(),str.length());
+	buffer_.append(str.data(), str.length());
 	return *this;
 }
 
@@ -107,4 +106,31 @@ cm::LogStream::self &cm::LogStream::operator<<(const Buffer &buf) {
 	return *this;
 }
 
+template<typename T>
+cm::Fmt::Fmt(const char *fmt, const T val) {
+	static_assert(std::is_arithmetic_v<T> == true, "Must be arithmetic type");
+	length_ = snprintf(buf_, sizeof(buf_), fmt, val);
+	assert(static_cast<size_t>(length_) < sizeof(buf_));
+}
 
+template cm::Fmt::Fmt(const char *fmt, char);
+
+template cm::Fmt::Fmt(const char *fmt, short);
+
+template cm::Fmt::Fmt(const char *fmt, unsigned short);
+
+template cm::Fmt::Fmt(const char *fmt, int);
+
+template cm::Fmt::Fmt(const char *fmt, unsigned int);
+
+template cm::Fmt::Fmt(const char *fmt, long);
+
+template cm::Fmt::Fmt(const char *fmt, unsigned long);
+
+template cm::Fmt::Fmt(const char *fmt, long long);
+
+template cm::Fmt::Fmt(const char *fmt, unsigned long long);
+
+template cm::Fmt::Fmt(const char *fmt, float);
+
+template cm::Fmt::Fmt(const char *fmt, double);
