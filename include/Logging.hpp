@@ -1,43 +1,19 @@
 #pragma once
-#include <cstring>
 #include <LogStream.hpp>
 #include <memory>
 
 namespace cm {
 	class Logger {
 	public:
-		enum class LogLevel { RACE, DEBUG, INFO, WARN, ERROR, FATAL, NUM_LOG_LEVELS };
+		enum class LogLevel { TRACE, DEBUG, INFO, WARN, ERROR, FATAL, NUM_LOG_LEVELS };
 
-		class SourceFile {
-		public:
-			template<int N>
-			SourceFile(const char (&arr)[N]): data_(arr), size_(N - 1) {
-				const char *slash = strrchr(data_, '/');
-				if (slash) {
-					data_ = slash + 1;
-					size_ -= data_ - arr;
-				}
-			}
+		Logger(const std::string &, int);
 
-			explicit SourceFile(const char *name): data_(name) {
-				const char *slash = strrchr(data_, '/');
-				if (slash) {
-					data_ = slash + 1;
-				}
-				size_ = static_cast<int>(strlen(data_));
-			}
+		Logger(const std::string &, int, LogLevel);
 
-			const char *data_;
-			int size_{};
-		};
+		Logger(const std::string &, int, LogLevel, const char *);
 
-		Logger(SourceFile, int);
-
-		Logger(SourceFile, int, LogLevel);
-
-		Logger(SourceFile, int, LogLevel, const char *);
-
-		Logger(SourceFile, int, bool);
+		Logger(const std::string &, int, bool);
 
 		~Logger();
 
@@ -51,4 +27,10 @@ namespace cm {
 		class Impl;
 		std::unique_ptr<Impl> impl_;
 	};
+
+#define LOG_WARN cm::Logger(__FILE__, __LINE__, cm::Logger::LogLevel::WARN).stream()
+#define LOG_ERROR cm::Logger(__FILE__, __LINE__, cm::Logger::LogLevel::ERROR).stream()
+#define LOG_FATAL cm::Logger(__FILE__, __LINE__, cm::Logger::LogLevel::FATAL).stream()
+#define LOG_SYSERR cm::Logger(__FILE__, __LINE__, false).stream()
+#define LOG_SYSFATAL cm::Logger(__FILE__, __LINE__, true).stream()
 }

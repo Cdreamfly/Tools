@@ -48,6 +48,20 @@ namespace cm {
 		};
 	}
 
+	class Fmt {
+	public:
+		template<typename T>
+		Fmt(const char *, T);
+
+		[[nodiscard]] const char *data() const { return buf_; }
+
+		[[nodiscard]] int length() const { return length_; }
+
+	private:
+		char buf_[32]{};
+		int length_;
+	};
+
 	class LogStream : NonCopyable {
 	public:
 		using self = LogStream;
@@ -87,6 +101,8 @@ namespace cm {
 
 		self &operator<<(const Buffer &);
 
+		self &operator<<(const Fmt &);
+
 		void append(const char *data, const std::size_t len) { buffer_.append(data, len); }
 
 		[[nodiscard]] const Buffer &buffer() const { return buffer_; }
@@ -101,23 +117,4 @@ namespace cm {
 		Buffer buffer_;
 		static constexpr int kMaxNumericSize = 48;
 	};
-
-	class Fmt {
-	public:
-		template<typename T>
-		Fmt(const char *, T);
-
-		[[nodiscard]] const char *data() const { return buf_; }
-
-		[[nodiscard]] int length() const { return length_; }
-
-	private:
-		char buf_[32]{};
-		int length_;
-	};
-
-	inline LogStream &operator<<(LogStream &s, const Fmt &fmt) {
-		s.append(fmt.data(), fmt.length());
-		return s;
-	}
 }

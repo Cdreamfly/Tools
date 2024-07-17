@@ -2,38 +2,40 @@
 
 #include <cassert>
 #include <Timestamp.hpp>
+#include <ctime>
+#include <iomanip>
 
-class T {
-public:
-	T(const char *str, const unsigned len): str_(str), len_(len) {
-		assert(strlen(str) == len);
-	}
-
-	const char *str_;
-	const unsigned len_;
+const char *LogLevelName[] = {
+	"TRACE ",
+	"DEBUG ",
+	"INFO  ",
+	"WARN  ",
+	"ERROR ",
+	"FATAL ",
 };
-
-inline cm::LogStream::self &operator<<(cm::LogStream &s, const T v) {
-	s.append(v.str_, v.len_);
-	return s;
-}
-
-inline cm::LogStream::self &operator<<(cm::LogStream &s, const cm::Logger::SourceFile &v) {
-	s.append(v.data_, v.size_);
-	return s;
-}
 
 class cm::Logger::Impl {
 public:
-	Impl(const LogLevel level, const int savedErrno, const SourceFile &file, const int line): time_(Timestamp::now()),
-		stream_(), level_(level), line_(line), name_(file) {
+	Impl(const LogLevel level, const int savedErrno, const std::string &file, const int line): time_(Timestamp::now()),
+		stream_(), level_(level), line_(line) {
+		const size_t end = file.find_last_of('/');
+		if (end != std::string::npos) {
+			name_ = file.substr(end + 1);
+		}
+		formatTime();
+		stream_ <<LogLevelName[static_cast<int>(level)];
 	}
 
-	void formatTime() const {
+	void formatTime() {
 		const int64_t microSecondsSinceEpoch = time_.microSecondsSinceEpoch();
 		const int microseconds = static_cast<int>(microSecondsSinceEpoch % 1000000);
-		const Fmt us(".%06dZ", microseconds);
-		assert(us.length() == 9);
+		const std::time_t t = std::time(nullptr);
+		const std::tm *lt = localtime(&t);
+		const Fmt us(".%06d ", microseconds);
+		assert(us.length() == 8);
+		std::stringstream ss;
+		ss << std::put_time(lt, "%Y-%m-%d %H:%M:%S");
+		stream_ << ss.str() << us;
 	}
 
 	void finish();
@@ -42,29 +44,32 @@ public:
 	LogStream stream_;
 	LogLevel level_;
 	int line_;
-	SourceFile name_;
+	std::string name_;
 };
 
-cm::Logger::Logger(const SourceFile file, const int line) : impl_(
+cm::Logger::Logger(const std::string &file, const int line) : impl_(
 	std::make_unique<Impl>(LogLevel::INFO, 0, file, line)) {
 }
 
-cm::Logger::Logger(const SourceFile file, const int line, const bool toAbort) : impl_(
+cm::Logger::Logger(const std::string &file, const int line, const bool toAbort) : impl_(
 	std::make_unique<Impl>(toAbort ? LogLevel::FATAL : LogLevel::ERROR,errno, file, line)) {
 }
 
-cm::Logger::Logger(const SourceFile file, const int line, const LogLevel level) : impl_(
+cm::Logger::Logger(const std::string &file, const int line, const LogLevel level) : impl_(
 	std::make_unique<Impl>(level, 0, file, line)) {
 }
 
-cm::Logger::Logger(const SourceFile file, const int line, const LogLevel level, const char *func) : impl_(
+cm::Logger::Logger(const std::string &file, const int line, const LogLevel level, const char *func) : impl_(
 	std::make_unique<Impl>(level, 0, file, line)) {
 	impl_->stream_ << func << ' ';
 }
 
 cm::Logger::~Logger() {
 	impl_->finish();
+	const LogStream::Buffer &buf(stream().buffer());
+	fwrite(buf.data(), 1, buf.length(), stdout);
 	if (impl_->level_ == LogLevel::FATAL) {
+		fflush(stdout);
 		abort();
 	}
 }

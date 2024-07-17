@@ -106,6 +106,11 @@ cm::LogStream::self &cm::LogStream::operator<<(const Buffer &buf) {
 	return *this;
 }
 
+cm::LogStream::self &cm::LogStream::operator<<(const Fmt &fmt) {
+	buffer_.append(fmt.data(), fmt.length());
+	return *this;
+}
+
 template<typename T>
 cm::Fmt::Fmt(const char *fmt, const T val) {
 	static_assert(std::is_arithmetic_v<T> == true, "Must be arithmetic type");
