@@ -2,9 +2,9 @@
 
 #include <iostream>
 
-#include "Utils.hpp"
-#include "InetAddress.hpp"
-#include "SocketOps.hpp"
+#include "base/Utils.hpp"
+#include "net/InetAddress.hpp"
+#include "net/SocketOps.hpp"
 
 namespace cm {
 	class TcpFileClient {

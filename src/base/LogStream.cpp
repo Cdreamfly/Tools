@@ -1,5 +1,5 @@
-#include "LogStream.hpp"
-#include "Utils.hpp"
+#include "base/LogStream.hpp"
+#include "base/Utils.hpp"
 
 #include <cassert>
 

@@ -1,5 +1,5 @@
-#include "InetAddress.hpp"
-#include "SocketOps.hpp"
+#include "net/InetAddress.hpp"
+#include "net/SocketOps.hpp"
 #include <cstring>
 
 cm::net::InetAddress::InetAddress(const uint16_t port, const std::string &ip) {

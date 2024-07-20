@@ -1,5 +1,7 @@
 #pragma once
-#include <LogStream.hpp>
+
+#include "base/LogStream.hpp"
+
 #include <memory>
 
 namespace cm {
@@ -19,15 +21,16 @@ namespace cm {
 
 		[[nodiscard]] LogStream &stream() const;
 
-		[[nodiscard]] LogLevel logLevel() const;
+		static LogLevel logLevel();
 
-		void setLogLevel(LogLevel) const;
+		static void setLogLevel(LogLevel);
 
 	private:
 		class Impl;
 		std::unique_ptr<Impl> impl_;
 	};
 
+#define LOG_INFO if (muduo::Logger::logLevel() <= cm::Logger::LogLevel::INFO) cm::Logger(__FILE__, __LINE__).stream()
 #define LOG_WARN cm::Logger(__FILE__, __LINE__, cm::Logger::LogLevel::WARN).stream()
 #define LOG_ERROR cm::Logger(__FILE__, __LINE__, cm::Logger::LogLevel::ERROR).stream()
 #define LOG_FATAL cm::Logger(__FILE__, __LINE__, cm::Logger::LogLevel::FATAL).stream()

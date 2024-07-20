@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "Copyable.hpp"
+#include "base/Copyable.hpp"
 
 namespace cm {
 	class Timestamp : public Copyable{

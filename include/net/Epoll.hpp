@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <cassert>
 
-#include "NonCopyable.hpp"
+#include "base/NonCopyable.hpp"
 
 namespace cm {
     constexpr size_t kMAX_EVENT_NUM = 1024;

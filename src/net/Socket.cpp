@@ -1,6 +1,6 @@
-#include "Socket.hpp"
-#include "InetAddress.hpp"
-#include "SocketOps.hpp"
+#include "net/Socket.hpp"
+#include "net/InetAddress.hpp"
+#include "net/SocketOps.hpp"
 
 #include <cstring>
 

@@ -1,7 +1,7 @@
-#include "Logging.hpp"
+#include "base/Logging.hpp"
+#include "base/Timestamp.hpp"
 
 #include <cassert>
-#include <Timestamp.hpp>
 #include <ctime>
 #include <iomanip>
 
@@ -14,16 +14,23 @@ const char *LogLevelName[] = {
 	"FATAL ",
 };
 
+cm::Logger::LogLevel initLogLevel() {
+	if (::getenv("CM_LOG_TRACE")) return cm::Logger::LogLevel::TRACE;
+	if (::getenv("CM_LOG_DEBUG")) return cm::Logger::LogLevel::DEBUG;
+	return cm::Logger::LogLevel::INFO;
+}
+
 class cm::Logger::Impl {
 public:
 	Impl(const LogLevel level, const int savedErrno, const std::string &file, const int line): time_(Timestamp::now()),
-		stream_(), level_(level), line_(line) {
+		stream_(), line_(line) {
 		const size_t end = file.find_last_of('/');
 		if (end != std::string::npos) {
 			name_ = file.substr(end + 1);
 		}
 		formatTime();
-		stream_ <<LogLevelName[static_cast<int>(level)];
+		stream_ << LogLevelName[static_cast<int>(level)];
+		level_ = level;
 	}
 
 	void formatTime() {
@@ -42,10 +49,12 @@ public:
 
 	Timestamp time_;
 	LogStream stream_;
-	LogLevel level_;
+	static LogLevel level_;
 	int line_;
 	std::string name_;
 };
+
+cm::Logger::LogLevel cm::Logger::Impl::level_ = initLogLevel();
 
 cm::Logger::Logger(const std::string &file, const int line) : impl_(
 	std::make_unique<Impl>(LogLevel::INFO, 0, file, line)) {
@@ -74,17 +83,16 @@ cm::Logger::~Logger() {
 	}
 }
 
-
-cm::Logger::LogLevel cm::Logger::logLevel() const {
-	return impl_->level_;
+cm::Logger::LogLevel cm::Logger::logLevel() {
+	return Impl::level_;
 }
 
 cm::LogStream &cm::Logger::stream() const {
 	return impl_->stream_;
 }
 
-void cm::Logger::setLogLevel(const LogLevel level) const {
-	impl_->level_ = level;
+void cm::Logger::setLogLevel(const LogLevel level) {
+	Impl::level_ = level;
 }
 
 void cm::Logger::Impl::finish() {

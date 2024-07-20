@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NonCopyable.hpp"
+#include "base/NonCopyable.hpp"
 
 
 namespace cm::net {

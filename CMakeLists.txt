@@ -9,6 +9,7 @@ add_definitions("-g -Os -Wall -Werror -fPIC -std=c++17")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 file(GLOB SRC_FILES
-        "${PROJECT_SOURCE_DIR}/src/*")
+        "${PROJECT_SOURCE_DIR}/src/base/*"
+        "${PROJECT_SOURCE_DIR}/src/net/*")
 
 add_executable(${CMAKE_PROJECT_NAME} main.cpp ${SRC_FILES})
