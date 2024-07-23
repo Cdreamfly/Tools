@@ -4,33 +4,33 @@
 #include <cassert>
 #include <ctime>
 #include <iomanip>
+#include <thread>
+#include <unistd.h>
+#include <sys/syscall.h>
 
 const char *LogLevelName[] = {
-	"TRACE ",
-	"DEBUG ",
-	"INFO  ",
-	"WARN  ",
-	"ERROR ",
-	"FATAL ",
+	" TRACE ",
+	" DEBUG ",
+	" INFO  ",
+	" WARN  ",
+	" ERROR ",
+	" FATAL ",
 };
-
-cm::Logger::LogLevel initLogLevel() {
-	if (::getenv("CM_LOG_TRACE")) return cm::Logger::LogLevel::TRACE;
-	if (::getenv("CM_LOG_DEBUG")) return cm::Logger::LogLevel::DEBUG;
-	return cm::Logger::LogLevel::INFO;
-}
 
 class cm::Logger::Impl {
 public:
 	Impl(const LogLevel level, const int savedErrno, const std::string &file, const int line): time_(Timestamp::now()),
-		stream_(), line_(line) {
+		stream_(), level_(level), line_(line) {
 		const size_t end = file.find_last_of('/');
 		if (end != std::string::npos) {
 			name_ = file.substr(end + 1);
 		}
 		formatTime();
+		stream_ << syscall(SYS_gettid);
 		stream_ << LogLevelName[static_cast<int>(level)];
-		level_ = level;
+		if (savedErrno != 0) {
+			stream_ << strerror(savedErrno) << " (errno=" << savedErrno << ") ";
+		}
 	}
 
 	void formatTime() {
@@ -49,12 +49,12 @@ public:
 
 	Timestamp time_;
 	LogStream stream_;
-	static LogLevel level_;
+	LogLevel level_;
 	int line_;
 	std::string name_;
 };
 
-cm::Logger::LogLevel cm::Logger::Impl::level_ = initLogLevel();
+cm::Logger::LogLevel cm::Logger::logLevel_ = LogLevel::INFO;
 
 cm::Logger::Logger(const std::string &file, const int line) : impl_(
 	std::make_unique<Impl>(LogLevel::INFO, 0, file, line)) {
@@ -84,7 +84,7 @@ cm::Logger::~Logger() {
 }
 
 cm::Logger::LogLevel cm::Logger::logLevel() {
-	return Impl::level_;
+	return logLevel_;
 }
 
 cm::LogStream &cm::Logger::stream() const {
@@ -92,7 +92,7 @@ cm::LogStream &cm::Logger::stream() const {
 }
 
 void cm::Logger::setLogLevel(const LogLevel level) {
-	Impl::level_ = level;
+	logLevel_ = level;
 }
 
 void cm::Logger::Impl::finish() {

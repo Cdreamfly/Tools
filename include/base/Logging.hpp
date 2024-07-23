@@ -26,11 +26,17 @@ namespace cm {
 		static void setLogLevel(LogLevel);
 
 	private:
+		static LogLevel logLevel_;
 		class Impl;
 		std::unique_ptr<Impl> impl_;
 	};
 
-#define LOG_INFO if (muduo::Logger::logLevel() <= cm::Logger::LogLevel::INFO) cm::Logger(__FILE__, __LINE__).stream()
+#define LOG_TRACE if (cm::Logger::logLevel() <= cm::Logger::LogLevel::TRACE) \
+						cm::Logger(__FILE__, __LINE__, cm::Logger::LogLevel::TRACE, __func__).stream()
+#define LOG_DEBUG if (cm::Logger::logLevel() <= cm::Logger::LogLevel::DEBUG) \
+						cm::Logger(__FILE__, __LINE__, cm::Logger::LogLevel::DEBUG, __func__).stream()
+#define LOG_INFO if (cm::Logger::logLevel() <=cm::Logger::LogLevel::INFO) \
+						cm::Logger(__FILE__, __LINE__).stream()
 #define LOG_WARN cm::Logger(__FILE__, __LINE__, cm::Logger::LogLevel::WARN).stream()
 #define LOG_ERROR cm::Logger(__FILE__, __LINE__, cm::Logger::LogLevel::ERROR).stream()
 #define LOG_FATAL cm::Logger(__FILE__, __LINE__, cm::Logger::LogLevel::FATAL).stream()
