@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 #include "base/LogStream.hpp"
 
 #include <memory>
@@ -8,6 +10,9 @@ namespace cm {
 	class Logger {
 	public:
 		enum class LogLevel { TRACE, DEBUG, INFO, WARN, ERROR, FATAL, NUM_LOG_LEVELS };
+
+		using OutPutCallback = std::function<void(const char *, int)>;
+		using FlushCallback = std::function<void()>;
 
 		Logger(const std::string &, int);
 
@@ -25,7 +30,17 @@ namespace cm {
 
 		static void setLogLevel(LogLevel);
 
+		static void setOutPutCallback(const OutPutCallback &cb) {
+			outPutCallback_ = cb;
+		}
+
+		static void setFlushCallback(const FlushCallback &cb) {
+			flushCallback_ = cb;
+		}
+
 	private:
+		static OutPutCallback outPutCallback_;
+		static FlushCallback flushCallback_;
 		static LogLevel logLevel_;
 		class Impl;
 		std::unique_ptr<Impl> impl_;

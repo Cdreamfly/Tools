@@ -56,6 +56,14 @@ public:
 
 cm::Logger::LogLevel cm::Logger::logLevel_ = LogLevel::INFO;
 
+cm::Logger::OutPutCallback cm::Logger::outPutCallback_ = [](const char *str, const int len) {
+	fwrite(str, 1, len, stdout);
+};
+
+cm::Logger::FlushCallback cm::Logger::flushCallback_ = [] {
+	fflush(stdout);
+};
+
 cm::Logger::Logger(const std::string &file, const int line) : impl_(
 	std::make_unique<Impl>(LogLevel::INFO, 0, file, line)) {
 }
@@ -76,9 +84,9 @@ cm::Logger::Logger(const std::string &file, const int line, const LogLevel level
 cm::Logger::~Logger() {
 	impl_->finish();
 	const LogStream::Buffer &buf(stream().buffer());
-	fwrite(buf.data(), 1, buf.length(), stdout);
+	outPutCallback_(buf.data(), buf.length());
 	if (impl_->level_ == LogLevel::FATAL) {
-		fflush(stdout);
+		flushCallback_();
 		abort();
 	}
 }

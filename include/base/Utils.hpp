@@ -37,13 +37,11 @@ namespace cm {
 		return p - buf;
 	}
 
-	inline size_t convertHex(char buf[], uintptr_t value)
-	{
+	inline size_t convertHex(char buf[], uintptr_t value) {
 		uintptr_t i = value;
-		char* p = buf;
+		char *p = buf;
 
-		do
-		{
+		do {
 			int lsd = static_cast<int>(i % 16);
 			i /= 16;
 			*p++ = digitsHex[lsd];
@@ -404,5 +402,14 @@ namespace cm {
 			ss << lut[ch[i] >> 4] << lut[ch[i] & 0xf];
 		}
 		return ss.str();
+	}
+
+	inline std::string hostname() {
+		char buf[256] = {0};
+		if (::gethostname(buf, sizeof(buf)) == 0) {
+			buf[sizeof(buf) - 1] = '\0';
+			return buf;
+		}
+		return "unknownhost";
 	}
 }
